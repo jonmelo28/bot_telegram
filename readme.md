@@ -1,16 +1,24 @@
-🚀 Bot Telegram com Relatórios PDF (MySQL + Oracle)
+# 🚀 Bot Telegram com Relatórios PDF (MySQL + Oracle)
 
 Sistema completo de bot para Telegram com:
 
-📊 Geração de relatórios em PDF
-🤖 Integração com Telegram via Webhook
-🔐 Painel administrativo com autenticação
-🗄️ Controle de usuários e permissões (MySQL)
-📈 Consultas de dados corporativos (Oracle)
-📸 Preview
+- 📊 Geração de relatórios em PDF  
+- 🤖 Integração com Telegram via Webhook  
+- 🔐 Painel administrativo com autenticação  
+- 🗄️ Controle de usuários e permissões (MySQL)  
+- 📈 Consultas de dados corporativos (Oracle)  
 
-🧱 # Arquitetura
+---
 
+## 📸 Preview
+
+> (Adicione prints do sistema aqui futuramente)
+
+---
+
+## 🧱 Arquitetura
+
+```bash
 bot_telegram/
 ├─ scripts/
 ├─ src/
@@ -23,34 +31,62 @@ bot_telegram/
 │  └─ views/
 ├─ .env.example
 ├─ package.json
+```
 
-⚙️ Tecnologias
-Node.js
-Express
-MySQL (mysql2)
-Oracle (oracledb)
-PDFKit
-EJS
-JWT
-Bcrypt
-Axios
-🚀 Instalação
-1. Clonar o projeto
+---
+
+## ⚙️ Tecnologias
+
+- Node.js  
+- Express  
+- MySQL (mysql2)  
+- Oracle (oracledb)  
+- PDFKit  
+- EJS  
+- JWT  
+- Bcrypt  
+- Axios  
+
+---
+
+## 🚀 Instalação
+
+### 1. Clonar o projeto
+
+```bash
 git clone https://github.com/jonmelo28/bot_telegram.git
 cd bot_telegram
-2. Instalar dependências
+```
+
+---
+
+### 2. Instalar dependências
+
+```bash
 npm install
-🔑 Configuração do .env
-📌 Passo 1 — Criar arquivo
+```
 
-Copie o arquivo de exemplo:
+---
 
+## 🔑 Configuração do `.env`
+
+### 📌 Passo 1 — Criar arquivo
+
+```bash
 cp .env.example .env
+```
 
 Ou renomeie manualmente:
 
+```bash
 .env.example → .env
-📌 Passo 2 — Configurar variáveis
+```
+
+---
+
+### 📌 Passo 2 — Configurar variáveis
+
+```env
 PORT=3000
 
 # Telegram
@@ -71,10 +107,23 @@ DB_CONNECT_STRING=host:1521/servico
 
 # Segurança
 JWT_SECRET=segredo_super_forte
-🗄️ Banco de Dados MySQL
-📌 Criar banco
+```
+
+---
+
+## 🗄️ Banco de Dados MySQL
+
+### 📌 Criar banco
+
+```sql
 CREATE DATABASE bot_telegram;
-📌 Criar tabelas
+```
+
+---
+
+### 📌 Criar tabelas
+
+```sql
 CREATE TABLE usuarios_bot (
     id INT AUTO_INCREMENT PRIMARY KEY,
     telegram_user_id VARCHAR(50) UNIQUE,
@@ -126,76 +175,141 @@ CREATE TABLE logs_admin_bot (
     descricao TEXT,
     dt_log TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-🔐 Criar usuário administrador
-1. Gerar senha criptografada
+```
+
+---
+
+## 🔐 Criar usuário administrador
+
+### 1. Gerar senha criptografada
+
+```bash
 node scripts/gerar-hash.js suaSenha
-2. Inserir no banco
+```
+
+---
+
+### 2. Inserir no banco
+
+```sql
 INSERT INTO usuarios_adm_bot (nome, email, senha)
 VALUES ('Admin', 'admin@email.com', 'HASH_GERADO');
-🤖 Configuração do Telegram
-📌 Criar bot
-Acesse o Telegram
-Procure por BotFather
-Use o comando:
+```
+
+---
+
+## 🤖 Configuração do Telegram
+
+### 📌 Criar bot
+
+1. Acesse o Telegram  
+2. Procure por **BotFather**  
+3. Use o comando:
+
+```bash
 /newbot
-Copie o token gerado
-📌 Configurar webhook
+```
+
+4. Copie o token gerado
+
+---
+
+### 📌 Configurar webhook
 
 O sistema registra automaticamente:
 
+```bash
 https://seu-dominio.com/telegram/webhook
-▶️ Rodando o projeto
-Desenvolvimento
+```
+
+---
+
+## ▶️ Rodando o projeto
+
+### Desenvolvimento
+
+```bash
 npm run dev
-Produção
+```
+
+---
+
+### Produção
+
+```bash
 npm start
-🔑 Acesso ao sistema
+```
 
-Painel administrativo:
+---
 
+## 🔑 Acesso ao sistema
+
+```bash
 http://localhost:3000/admin/login
-📊 Funcionalidades do Bot
-Relatório do dia
-Relatório do mês
-Inadimplência
-Raio X
-Venda por cidade
-Produtos próximos do vencimento
-🔐 Controle de acesso
+```
+
+---
+
+## 📊 Funcionalidades do Bot
+
+- Relatório do dia  
+- Relatório do mês  
+- Inadimplência  
+- Raio X  
+- Venda por cidade  
+- Produtos próximos do vencimento  
+
+---
+
+## 🔐 Controle de acesso
 
 O bot só funciona se o usuário:
 
-✔ estiver cadastrado no banco
-✔ estiver ativo
-✔ tiver permissões vinculadas
+- ✔ estiver cadastrado no banco  
+- ✔ estiver ativo  
+- ✔ tiver permissões vinculadas  
 
-⚠️ Problemas comuns
-❌ Bot não responde
-Verifique webhook
-Verifique token
+---
 
-❌ Erro MySQL
-Confirme .env
-Confirme banco criado
+## ⚠️ Problemas comuns
 
-❌ Erro Oracle
-Verifique DB_CONNECT_STRING
-Verifique Instant Client
+### ❌ Bot não responde
+- Verifique webhook  
+- Verifique token  
 
-🔒 Segurança
-❌ Nunca subir .env no GitHub
-🔑 Use senha forte no JWT
+### ❌ Erro MySQL
+- Confirme `.env`  
+- Confirme banco criado  
 
-🔄 Troque tokens se expostos
-📌 Melhorias futuras
-Dashboard com gráficos
-Logs em tempo real
-Cache de consultas
-Multi-empresa
+### ❌ Erro Oracle
+- Verifique `DB_CONNECT_STRING`  
+- Verifique Instant Client  
 
-👨‍💻 Autor
-Jonatha de Souza Melo Melo
+---
 
-⭐ Contribuição
+## 🔒 Segurança
+
+- ❌ Nunca subir `.env` no GitHub  
+- 🔑 Use senha forte no JWT  
+- 🔄 Troque tokens se expostos  
+
+---
+
+## 📌 Melhorias futuras
+
+- Dashboard com gráficos  
+- Logs em tempo real  
+- Cache de consultas  
+- Multi-empresa  
+
+---
+
+## 👨‍💻 Autor
+
+**Jonatha de Souza Melo**
+
+---
+
+## ⭐ Contribuição
 
 Sinta-se à vontade para abrir PR ou Issue 🚀
