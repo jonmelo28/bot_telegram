@@ -1,0 +1,59 @@
+<%- include('../partials/header', { pageTitle: 'Logs do Bot' }) %>
+
+<h2 class="mb-4">Logs do Bot</h2>
+
+<table class="table table-bordered table-striped bg-white">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Usuário</th>
+      <th>Telegram ID</th>
+      <th>Opção</th>
+      <th>Status</th>
+      <th>Mensagem</th>
+      <th>Data</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% if (!logsbot || logsbot.length === 0) { %>
+      <tr>
+        <td colspan="7" class="text-center text-muted">
+          Nenhum log encontrado
+        </td>
+      </tr>
+    <% } %>
+
+    <% logsbot.forEach(function(logsbot) { %>
+      <tr>
+        <td><%= logsbot.id %></td>
+
+        <!-- NOME DO USUÁRIO -->
+        <td><%= logsbot.nome || '' %></td>
+
+        <!-- TELEGRAM -->
+        <td><%= logsbot.telegram_user_id || '' %></td>
+
+        <!-- OPÇÃO -->
+        <td><%= logsbot.opcao || '' %></td>
+
+        <!-- STATUS -->
+        <td>
+          <% if (logsbot.status_execucao === 'SUCESSO') { %>
+            <span class="badge bg-success">Sucesso</span>
+          <% } else { %>
+            <span class="badge bg-danger">Erro</span>
+          <% } %>
+        </td>
+
+        <!-- MENSAGEM -->
+        <td><%= logsbot.mensagem || '' %></td>
+
+        <!-- DATA -->
+        <td><%= logsbot.dt_log_formatado || logsbot.dt_log || '' %></td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<%- include('../partials/footer') %>

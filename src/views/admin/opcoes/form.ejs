@@ -1,0 +1,75 @@
+<%- include('../partials/header', { pageTitle:  opcao ? 'Editar opção' : 'Nova opção'  }) %>
+
+  <!-- HEADER -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+      <%= opcao ? 'Editar opção' : 'Nova opção' %>
+    </h2>
+  </div>
+
+  <!-- FORM -->
+  <form method="POST" action="/admin/opcoes/salvar" class="card card-body bg-white">
+
+    <input type="hidden" name="id" value="<%= opcao ? opcao.id : '' %>">
+
+    <div class="row g-3">
+
+      <div class="col-md-4">
+        <label class="form-label">Código</label>
+        <input
+          type="text"
+          class="form-control"
+          name="codigo"
+          value="<%= opcao ? opcao.codigo : '' %>"
+          required
+        >
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label">Nome</label>
+        <input
+          type="text"
+          class="form-control"
+          name="nome"
+          value="<%= opcao ? opcao.nome : '' %>"
+          required
+        >
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label">Ativo</label>
+        <select class="form-select" name="ativo">
+          <option value="S" <%= (!opcao || opcao.ativo === 'S') ? 'selected' : '' %>>
+            Sim
+          </option>
+          <option value="N" <%= (opcao && opcao.ativo === 'N') ? 'selected' : '' %>>
+            Não
+          </option>
+        </select>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">Descrição</label>
+        <textarea
+          class="form-control"
+          name="descricao"
+          rows="3"
+        ><%= opcao ? opcao.descricao : '' %></textarea>
+      </div>
+
+    </div>
+
+    <!-- BOTÕES -->
+    <div class="mt-3">
+      <button class="btn btn-success" type="submit">
+        Salvar
+      </button>
+
+      <a href="/admin/opcoes" class="btn btn-secondary">
+        Cancelar
+      </a>
+    </div>
+
+  </form>
+
+  <%- include('../partials/footer') %>

@@ -1,0 +1,160 @@
+<%- include('../partials/header', { pageTitle: 'Permissões do Bot' }) %>
+
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">Permissões do Bot</h2>
+      <p class="text-muted mb-0">Gerencie quais opções cada usuário pode acessar no bot.</p>
+    </div>
+  </div>
+
+  <% if (erro) { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <%= erro %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <% } %>
+
+  <% if (sucesso) { %>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <%= sucesso %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <% } %>
+
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white border-0 pb-0">
+      <h5 class="fw-semibold mb-0">Adicionar permissão</h5>
+    </div>
+    <div class="card-body">
+<div class="row g-3 align-items-end">
+
+  <div class="col-md-4">
+    <form method="GET" action="/admin/permissoes">
+      <label class="form-label fw-semibold">Selecionar usuário</label>
+      <select class="form-select" name="usuario_id" onchange="this.form.submit()">
+        <option value="">Selecione um usuário</option>
+        <% usuarios.forEach(usuario => { %>
+          <option value="<%= usuario.id %>" <%= String(usuarioSelecionado || '') === String(usuario.id) ? 'selected' : '' %>>
+            <%= usuario.nome %>
+          </option>
+        <% }) %>
+      </select>
+    </form>
+  </div>
+
+  <div class="col-md-8">
+    <form method="POST" action="/admin/permissoes/adicionar" class="row g-3 align-items-end">
+      <% if (usuarioSelecionado) { %>
+        <input type="hidden" name="usuario_id" value="<%= usuarioSelecionado %>">
+      <% } %>
+
+      <div class="col-md-8">
+        <label class="form-label fw-semibold">Opção disponível</label>
+        <select
+          class="form-select"
+          name="opcao_id"
+          <%= !usuarioSelecionado || !opcoes.length ? 'disabled' : '' %>
+          required
+        >
+          <option value="">Selecione uma opção</option>
+          <% opcoes.forEach(opcao => { %>
+            <option value="<%= opcao.id %>">
+              <%= opcao.nome %> - <%= opcao.codigo %>
+            </option>
+          <% }) %>
+        </select>
+      </div>
+
+      <div class="col-md-4">
+        <button
+          type="submit"
+          class="btn btn-primary w-100"
+          <%= !usuarioSelecionado || !opcoes.length ? 'disabled' : '' %>
+        >
+          Adicionar
+        </button>
+      </div>
+    </form>
+  </div>
+
+</div>
+
+      <% if (!usuarioSelecionado) { %>
+        <div class="alert alert-secondary mt-4 mb-0">
+          Selecione um usuário para ver apenas as opções ainda não cadastradas.
+        </div>
+      <% } %>
+
+      <% if (usuarioSelecionado && opcoes.length === 0) { %>
+        <div class="alert alert-info mt-4 mb-0">
+          Esse usuário já possui todas as permissões disponíveis.
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-white border-0 pb-0">
+      <h5 class="fw-semibold mb-0">Permissões cadastradas</h5>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>ID</th>
+              <th>Usuário</th>
+              <th>Opção</th>
+              <th>Código</th>
+              <th>Status</th>
+              <th class="text-end">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (permissoes && permissoes.length) { %>
+              <% permissoes.forEach(permissao => { %>
+                <tr>
+                  <td><%= permissao.id %></td>
+                  <td><%= permissao.usuario_nome %></td>
+                  <td><%= permissao.opcao_nome %></td>
+                  <td>
+                    <span class="badge bg-secondary">
+                      <%= permissao.opcao_codigo %>
+                    </span>
+                  </td>
+                  <td>
+                    <% if (permissao.ativo === 'S') { %>
+                      <span class="badge bg-success">Ativa</span>
+                    <% } else { %>
+                      <span class="badge bg-danger">Inativa</span>
+                    <% } %>
+                  </td>
+                  <td class="text-end">
+                    <form method="POST" action="/admin/permissoes/<%= permissao.id %>/excluir" class="d-inline">
+                      <button
+                        type="submit"
+                        class="btn btn-sm btn-outline-danger"
+                        onclick="return confirm('Deseja realmente excluir esta permissão?')"
+                      >
+                        Excluir
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="6" class="text-center text-muted py-4">
+                  Nenhuma permissão cadastrada.
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+ <%- include('../partials/footer') %>

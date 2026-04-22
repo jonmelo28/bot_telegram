@@ -1,0 +1,24 @@
+{
+  "name": "bot-telegram-oracle-mysql-pdf",
+  "version": "1.0.0",
+  "description": "Bot Telegram com MySQL para controle, Oracle para relatórios e geração de PDF",
+  "main": "src/app.js",
+  "scripts": {
+    "dev": "node --watch src/app.js",
+    "start": "node src/app.js"
+  },
+  "dependencies": {
+    "axios": "^1.9.0",
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.4.5",
+    "ejs": "^5.0.2",
+    "express": "^4.21.2",
+    "express-session": "^1.19.0",
+    "form-data": "^4.0.0",
+    "jsonwebtoken": "^9.0.3",
+    "mysql2": "^3.11.3",
+    "oracledb": "^6.10.0",
+    "pdfkit": "^0.15.0"
+  }
+}

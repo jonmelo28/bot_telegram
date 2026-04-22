@@ -1,0 +1,302 @@
+const ORACLE_RAIOX_SQL = {
+  resumoRca: `
+    WITH
+    PARAMS AS (
+        SELECT
+            :dtIni AS DT_INI,
+            :dtFim AS DT_FIM,
+            :codFilial AS CODFILIAL,
+            :codusur AS CODUSUR,
+            :codfunc AS CODFUNC
+        FROM DUAL
+    ),
+    LIB_SUP AS (
+        SELECT CODIGON
+        FROM PCLIB
+        WHERE CODFUNC = (SELECT CODFUNC FROM PARAMS)
+          AND CODTABELA = 7
+    ),
+    LIB_FORN AS (
+        SELECT CODIGON
+        FROM PCLIB
+        WHERE CODFUNC = (SELECT CODFUNC FROM PARAMS)
+          AND CODTABELA = 3
+    ),
+    LIB_DEPTO AS (
+        SELECT CODIGON
+        FROM PCLIB
+        WHERE CODFUNC = (SELECT CODFUNC FROM PARAMS)
+          AND CODTABELA = 2
+    ),
+    PEDIDOS AS (
+        SELECT
+            C.CODUSUR,
+            U.NOME,
+            COUNT(DISTINCT C.CODCLI) AS QTCLIPOS_PED,
+            ROUND(
+                SUM(
+                    NVL(I.QT, 0) *
+                    ( NVL(I.PVENDA, 0)
+                    + NVL(I.VLOUTRASDESP, 0)
+                    + NVL(I.VLFRETE, 0) )
+                ),
+                2
+            ) AS PVENDA
+        FROM PCPEDI I
+        JOIN PCPEDC C
+          ON C.NUMPED = I.NUMPED
+        JOIN PCUSUARI U
+          ON U.CODUSUR = C.CODUSUR
+        JOIN PCPRODUT P
+          ON P.CODPROD = I.CODPROD
+        JOIN PCCLIENT CLI
+          ON CLI.CODCLI = C.CODCLI
+        LEFT JOIN PCATIVI A
+          ON A.CODATIV = CLI.CODATV1
+        LEFT JOIN PCPRACA PR
+          ON PR.CODPRACA = C.CODPRACA
+        WHERE U.CODSUPERVISOR NOT IN ('9999')
+          AND C.DATA BETWEEN (SELECT DT_INI FROM PARAMS) AND (SELECT DT_FIM FROM PARAMS)
+          AND C.CODFILIAL = (SELECT CODFILIAL FROM PARAMS)
+          AND C.CODUSUR   = (SELECT CODUSUR FROM PARAMS)
+          AND C.CONDVENDA IN (1, 2, 3, 7, 9, 14, 15, 17, 18, 19, 98)
+          AND NVL(I.BONIFIC, 'N') = 'N'
+          AND C.DTCANCEL IS NULL
+          AND P.CODFORNEC IN (SELECT CODIGON FROM LIB_FORN)
+          AND P.CODEPTO   IN (SELECT CODIGON FROM LIB_DEPTO)
+        GROUP BY C.CODUSUR, U.NOME
+    ),
+    METAS AS (
+        SELECT
+            M.CODUSUR,
+            MAX(U.NOME) AS NOME,
+            SUM(NVL(M.VLVENDAPREV, 0)) AS VLMETA,
+            SUM(NVL(M.CLIPOSPREV, 0)) AS QTMETACLIPOS
+        FROM PCMETA M
+        JOIN PCUSUARI U
+          ON U.CODUSUR = M.CODUSUR
+        WHERE M.CODUSUR = (SELECT CODUSUR FROM PARAMS)
+          AND M.TIPOMETA = 'M'
+          AND M.DATA BETWEEN (SELECT DT_INI FROM PARAMS) AND (SELECT DT_FIM FROM PARAMS)
+        GROUP BY M.CODUSUR
+    ),
+    FAT_VENDAS AS (
+        SELECT
+            N.CODUSUR,
+            U.NOME,
+            COUNT(DISTINCT M.CODCLI) AS QTCLIPOSFAT,
+            SUM(
+                CASE
+                    WHEN NVL(MC.VLSUBTOTITEM, 0) <> 0 THEN
+                        NVL(MC.VLSUBTOTITEM, 0)
+                    ELSE
+                        ROUND(
+                            (
+                                DECODE(
+                                    M.CODOPER,
+                                    'S', NVL(DECODE(N.CONDVENDA, 7, M.QTCONT, M.QT), 0),
+                                    'ST', NVL(DECODE(N.CONDVENDA, 7, M.QTCONT, M.QT), 0),
+                                    'SM', NVL(DECODE(N.CONDVENDA, 7, M.QTCONT, M.QT), 0),
+                                    0
+                                )
+                            ) *
+                            NVL(
+                                DECODE(
+                                    N.CONDVENDA,
+                                    7, NVL(M.PUNITCONT,0) + NVL(M.VLFRETE,0) + NVL(M.VLOUTRASDESP,0) + NVL(M.VLFRETE_RATEIO,0) + NVL(M.VLOUTROS,0),
+                                    NVL(M.PUNIT,0) + NVL(M.VLFRETE,0) + NVL(M.VLOUTRASDESP,0) + NVL(M.VLFRETE_RATEIO,0) + NVL(M.VLOUTROS,0)
+                                ),
+                                0
+                            ),
+                            2
+                        )
+                END
+            ) AS VLVENDA
+        FROM PCMOV M
+        JOIN PCNFSAID N
+          ON N.NUMTRANSVENDA = M.NUMTRANSVENDA
+         AND N.CODFILIAL = M.CODFILIAL
+        JOIN PCPRODUT P
+          ON P.CODPROD = M.CODPROD
+        JOIN PCCLIENT C
+          ON C.CODCLI = M.CODCLI
+        JOIN PCUSUARI U
+          ON U.CODUSUR = N.CODUSUR
+        LEFT JOIN PCSUPERV SP
+          ON SP.CODSUPERVISOR = NVL(N.CODSUPERVISOR, U.CODSUPERVISOR)
+        LEFT JOIN PCMOVCOMPLE MC
+          ON MC.NUMTRANSITEM = M.NUMTRANSITEM
+        WHERE M.DTMOV BETWEEN (SELECT DT_INI FROM PARAMS) AND (SELECT DT_FIM FROM PARAMS)
+          AND N.DTSAIDA BETWEEN (SELECT DT_INI FROM PARAMS) AND (SELECT DT_FIM FROM PARAMS)
+          AND M.CODFILIAL = (SELECT CODFILIAL FROM PARAMS)
+          AND N.CODFILIAL = (SELECT CODFILIAL FROM PARAMS)
+          AND N.CODUSUR = (SELECT CODUSUR FROM PARAMS)
+          AND M.CODOPER NOT IN ('SR', 'SO')
+          AND NVL(N.TIPOVENDA, 'X') NOT IN ('SR', 'DF')
+          AND N.CODFISCAL NOT IN (522, 622, 722, 532, 632, 732)
+          AND N.CONDVENDA NOT IN (4, 8, 10, 13, 20, 98, 99)
+          AND N.DTCANCEL IS NULL
+          AND NVL(N.CODSUPERVISOR, U.CODSUPERVISOR) IN (SELECT CODIGON FROM LIB_SUP)
+          AND P.CODFORNEC IN (SELECT CODIGON FROM LIB_FORN)
+          AND P.CODEPTO IN (SELECT CODIGON FROM LIB_DEPTO)
+        GROUP BY N.CODUSUR, U.NOME
+    )
+    SELECT
+        U.CODUSUR,
+        U.NOME,
+        NVL(P.QTCLIPOS_PED, 0) AS QTCLIPOS_PED,
+        NVL(P.PVENDA, 0) AS PVENDA,
+        NVL(M.VLMETA, 0) AS VLMETA,
+        NVL(M.QTMETACLIPOS, 0) AS QTMETACLIPOS,
+        NVL(F.VLVENDA, 0) AS VLVENDA,
+        NVL(F.QTCLIPOSFAT, 0) AS QTCLIPOSFAT
+    FROM PCUSUARI U
+    LEFT JOIN PEDIDOS P ON P.CODUSUR = U.CODUSUR
+    LEFT JOIN METAS M ON M.CODUSUR = U.CODUSUR
+    LEFT JOIN FAT_VENDAS F ON F.CODUSUR = U.CODUSUR
+    WHERE U.CODUSUR = (SELECT CODUSUR FROM PARAMS)
+  `,
+
+  diasUteis: `
+    SELECT COUNT(*) AS DIAVENDAS
+    FROM PCDIASUTEIS
+    WHERE DATA BETWEEN :dtIni AND :dtFim
+      AND DIAVENDAS = 'S'
+      AND CODFILIAL = :codFilial
+  `,
+
+  diasRestantes: `
+  SELECT COUNT(*) AS DIAS_RESTANTES
+  FROM PCDIASUTEIS
+  WHERE DATA > TRUNC(SYSDATE)
+    AND DATA <= :dtFim
+    AND DIAVENDAS = 'S'
+    AND CODFILIAL = :codFilial
+`,
+
+  detalhesSecao: `
+    WITH
+    PARAMS AS (
+        SELECT :dtIni AS DT_INI,
+               :dtFim AS DT_FIM,
+               :codFilial AS CODFILIAL,
+               :codusur AS CODUSUR,
+               :codfunc AS CODFUNC
+        FROM DUAL
+    ),
+    LIB_SUP AS (
+        SELECT CODIGON
+        FROM PCLIB
+        WHERE CODFUNC = (SELECT CODFUNC FROM PARAMS)
+          AND CODTABELA = 7
+    ),
+    LIB_FORN AS (
+        SELECT CODIGON
+        FROM PCLIB
+        WHERE CODFUNC = (SELECT CODFUNC FROM PARAMS)
+          AND CODTABELA = 3
+    ),
+    LIB_DEPTO AS (
+        SELECT CODIGON
+        FROM PCLIB
+        WHERE CODFUNC = (SELECT CODFUNC FROM PARAMS)
+          AND CODTABELA = 2
+    ),
+    PEDIDOS AS (
+        SELECT
+            P.CODSEC,
+            SUM(
+                ROUND(
+                    NVL(I.QT, 0) *
+                    ( NVL(I.PVENDA, 0)
+                    + NVL(I.VLOUTRASDESP, 0)
+                    + NVL(I.VLFRETE, 0) ),
+                    2
+                )
+            ) AS PVENDA,
+            COUNT(DISTINCT C.CODCLI) AS QTCLIPOS_PED
+        FROM PCPEDI I
+        JOIN PCPEDC C ON C.NUMPED = I.NUMPED
+        LEFT JOIN PCPRODUT P ON P.CODPROD = I.CODPROD
+        JOIN PCUSUARI U ON U.CODUSUR = C.CODUSUR
+        WHERE U.CODSUPERVISOR NOT IN ('9999')
+          AND C.DATA BETWEEN (SELECT DT_INI FROM PARAMS) AND (SELECT DT_FIM FROM PARAMS)
+          AND C.CODFILIAL = (SELECT CODFILIAL FROM PARAMS)
+          AND C.CODUSUR = (SELECT CODUSUR FROM PARAMS)
+          AND C.CONDVENDA IN (1, 2, 3, 7, 9, 14, 15, 17, 18, 19, 98)
+          AND NVL(I.BONIFIC, 'N') = 'N'
+          AND C.DTCANCEL IS NULL
+          AND P.CODFORNEC IN (SELECT CODIGON FROM LIB_FORN)
+          AND P.CODEPTO IN (SELECT CODIGON FROM LIB_DEPTO)
+        GROUP BY P.CODSEC
+    ),
+    FAT_VENDAS AS (
+        SELECT
+            P.CODSEC,
+            COUNT(DISTINCT M.CODCLI) AS QTCLIPOS_FAT,
+            SUM(
+                (
+                    CASE
+                        WHEN M.CODOPER IN ('S','ST','SM','SB') THEN
+                            NVL(DECODE(N.CONDVENDA, 7, M.QTCONT, M.QT), 0)
+                        ELSE 0
+                    END
+                ) *
+                (
+                    CASE
+                        WHEN N.CONDVENDA = 7 THEN NVL(M.PUNITCONT, 0)
+                        ELSE NVL(M.PUNIT, 0) + NVL(M.VLFRETE, 0) + NVL(M.VLOUTRASDESP, 0) + NVL(M.VLFRETE_RATEIO, 0) + NVL(M.VLOUTROS, 0)
+                    END
+                )
+            ) AS VLVENDA
+        FROM PCMOV M
+        JOIN PCNFSAID N
+          ON N.NUMTRANSVENDA = M.NUMTRANSVENDA
+         AND N.CODFILIAL = M.CODFILIAL
+        JOIN PCPRODUT P ON P.CODPROD = M.CODPROD
+        JOIN PCUSUARI U ON U.CODUSUR = N.CODUSUR
+        WHERE M.DTMOV BETWEEN (SELECT DT_INI FROM PARAMS) AND (SELECT DT_FIM FROM PARAMS)
+          AND N.DTSAIDA BETWEEN (SELECT DT_INI FROM PARAMS) AND (SELECT DT_FIM FROM PARAMS)
+          AND M.CODFILIAL = (SELECT CODFILIAL FROM PARAMS)
+          AND N.CODFILIAL = (SELECT CODFILIAL FROM PARAMS)
+          AND N.CODUSUR = (SELECT CODUSUR FROM PARAMS)
+          AND M.CODOPER NOT IN ('SR', 'SO')
+          AND NVL(N.TIPOVENDA, 'X') NOT IN ('SR', 'DF')
+          AND N.CODFISCAL NOT IN (522, 622, 722, 532, 632, 732)
+          AND N.CONDVENDA NOT IN (4, 8, 10, 13, 20, 98, 99)
+          AND N.DTCANCEL IS NULL
+          AND P.CODFORNEC IN (SELECT CODIGON FROM LIB_FORN)
+          AND P.CODEPTO IN (SELECT CODIGON FROM LIB_DEPTO)
+        GROUP BY P.CODSEC
+    ),
+    METAS AS (
+        SELECT
+            M.CODIGO AS CODSEC,
+            SUM(NVL(M.VLVENDAPREV, 0)) AS VLMETA,
+            SUM(NVL(M.CLIPOSPREV, 0)) AS QTMETACLIPOS
+        FROM PCMETA M
+        WHERE M.CODUSUR = (SELECT CODUSUR FROM PARAMS)
+          AND M.TIPOMETA = 'S'
+          AND M.DATA BETWEEN (SELECT DT_INI FROM PARAMS) AND (SELECT DT_FIM FROM PARAMS)
+        GROUP BY M.CODIGO
+    )
+    SELECT
+        S.CODSEC || ' - ' || S.DESCRICAO AS SECAO,
+        NVL(P.PVENDA, 0) AS PVENDA,
+        NVL(P.QTCLIPOS_PED, 0) AS QTCLIPOS_PED,
+        NVL(M.VLMETA, 0) AS VLMETA,
+        NVL(M.QTMETACLIPOS, 0) AS QTMETACLIPOS,
+        NVL(F.VLVENDA, 0) AS VLVENDA,
+        NVL(F.QTCLIPOS_FAT, 0) AS QTCLIPOS_FAT
+    FROM PCSECAO S
+    LEFT JOIN PEDIDOS P ON P.CODSEC = S.CODSEC
+    LEFT JOIN METAS M ON M.CODSEC = S.CODSEC
+    LEFT JOIN FAT_VENDAS F ON F.CODSEC = S.CODSEC
+    WHERE NVL(P.PVENDA, 0) > 0
+       OR NVL(F.VLVENDA, 0) > 0
+       OR NVL(M.VLMETA, 0) > 0
+    ORDER BY NVL(P.PVENDA, 0) DESC, NVL(F.VLVENDA, 0) DESC
+  `
+};
+
+module.exports = ORACLE_RAIOX_SQL;

@@ -1,0 +1,73 @@
+const ORACLE_VENDA_CIDADE_SQL = {
+  porSecao: `
+    SELECT
+      C.MUNICENT AS CIDADE,
+      C.CODCLI ||' - '|| C.CLIENTE AS CLIENTE,
+      R.CODSEC || ' - ' || S.DESCRICAO AS SECAO,
+      SUM(
+        ROUND(
+          NVL(I.QT, 0) *
+          (
+            NVL(I.PVENDA, 0)
+            + NVL(I.VLOUTRASDESP, 0)
+            + NVL(I.VLFRETE, 0)
+          ),
+          2
+        )
+      ) AS VENSECAO
+    FROM PCPEDI I
+    LEFT JOIN PCPEDC P
+      ON P.NUMPED = I.NUMPED
+    LEFT JOIN PCCLIENT C
+      ON C.CODCLI = P.CODCLI
+    LEFT JOIN PCPRODUT R
+      ON R.CODPROD = I.CODPROD
+    LEFT JOIN PCSECAO S
+      ON S.CODSEC = R.CODSEC
+    WHERE P.CODUSUR = :codusur
+      AND P.DATA BETWEEN :dtIni AND :dtFim
+      AND P.CODFILIAL IN (:CODFILIALS)
+      AND P.CONDVENDA IN (1, 2, 3, 7, 9, 14, 15, 17, 18, 19, 98)
+      AND NVL(I.BONIFIC, 'N') = 'N'
+      AND P.DTCANCEL IS NULL
+    GROUP BY C.MUNICENT, C.CODCLI, C.CLIENTE, R.CODSEC, S.DESCRICAO
+    ORDER BY C.MUNICENT, SECAO
+  `,
+
+  porFornecedor: `
+    SELECT
+      C.MUNICENT AS CIDADE,
+       C.CODCLI ||' - '|| C.CLIENTE AS CLIENTE,
+      R.CODFORNEC || ' - ' || F.FORNECEDOR AS FORNEC,
+      SUM(
+        ROUND(
+          NVL(I.QT, 0) *
+          (
+            NVL(I.PVENDA, 0)
+            + NVL(I.VLOUTRASDESP, 0)
+            + NVL(I.VLFRETE, 0)
+          ),
+          2
+        )
+      ) AS VENFORNEC
+    FROM PCPEDI I
+    LEFT JOIN PCPEDC P
+      ON P.NUMPED = I.NUMPED
+    LEFT JOIN PCCLIENT C
+      ON C.CODCLI = P.CODCLI
+    LEFT JOIN PCPRODUT R
+      ON R.CODPROD = I.CODPROD
+    LEFT JOIN PCFORNEC F
+      ON F.CODFORNEC = R.CODFORNEC
+    WHERE P.CODUSUR = :codusur
+      AND P.DATA BETWEEN :dtIni AND :dtFim
+      AND P.CODFILIAL IN (:CODFILIALS)
+      AND P.CONDVENDA IN (1, 2, 3, 7, 9, 14, 15, 17, 18, 19, 98)
+      AND NVL(I.BONIFIC, 'N') = 'N'
+      AND P.DTCANCEL IS NULL
+    GROUP BY C.MUNICENT, C.CODCLI, C.CLIENTE, R.CODFORNEC, F.FORNECEDOR
+    ORDER BY C.MUNICENT, FORNEC
+  `
+};
+
+module.exports = ORACLE_VENDA_CIDADE_SQL;
