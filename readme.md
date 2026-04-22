@@ -1,12 +1,5 @@
 🚀 Bot Telegram com Relatórios PDF (MySQL + Oracle)
 
-
-
-
-
-
-
-
 Sistema completo de bot para Telegram com:
 
 📊 Geração de relatórios em PDF
@@ -16,9 +9,8 @@ Sistema completo de bot para Telegram com:
 📈 Consultas de dados corporativos (Oracle)
 📸 Preview
 
-💡 (Opcional: você pode adicionar prints do sistema aqui depois)
+🧱 # Arquitetura
 
-🧱 Arquitetura
 bot_telegram/
 ├─ scripts/
 ├─ src/
@@ -31,6 +23,7 @@ bot_telegram/
 │  └─ views/
 ├─ .env.example
 ├─ package.json
+
 ⚙️ Tecnologias
 Node.js
 Express
