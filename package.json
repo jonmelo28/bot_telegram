@@ -3,6 +3,17 @@
   "version": "1.0.0",
   "description": "Bot Telegram com MySQL para controle, Oracle para relatórios e geração de PDF",
   "main": "src/app.js",
+   "author": "Jonatha de Souza Melo",
+  "keywords": [
+    "telegram",
+    "bot",
+    "mysql",
+    "oracle",
+    "winthor",
+    "nodejs",
+    "pdf",
+    "relatorio"
+  ],
   "scripts": {
     "dev": "node --watch src/app.js",
     "start": "node src/app.js"
