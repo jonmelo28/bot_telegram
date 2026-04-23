@@ -107,6 +107,7 @@ DB_CONNECT_STRING=host:1521/servico
 
 # Segurança
 JWT_SECRET=segredo_super_forte
+<<<<<<< HEAD
 ```
 
 ---
@@ -124,6 +125,16 @@ CREATE DATABASE bot_telegram;
 ### 📌 Criar tabelas
 
 ```sql
+=======
+🗄️ Banco de Dados MySQL
+
+📌 #Criar banco
+CREATE DATABASE bot_telegram;
+
+📌 #Criar tabelas
+
+#Usuario_bot
+>>>>>>> deeaeca (criacao tela de cadastrado e alteração de usuario administrador)
 CREATE TABLE usuarios_bot (
     id INT AUTO_INCREMENT PRIMARY KEY,
     telegram_user_id VARCHAR(50) UNIQUE,
@@ -136,6 +147,7 @@ CREATE TABLE usuarios_bot (
     dt_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+#Op
 CREATE TABLE opcoes_bot (
     id INT AUTO_INCREMENT PRIMARY KEY,
     codigo VARCHAR(50) UNIQUE,

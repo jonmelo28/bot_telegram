@@ -159,7 +159,57 @@ const MYSQL_ADMIN_SQL = {
     LEFT JOIN usuarios_bot u ON u.id = l.usuario_id
     ORDER BY l.dt_log DESC
     LIMIT 300
-    `
+    `,
+
+    listarUsuariosAdmin: `
+  SELECT
+    id,
+    nome,
+    email,
+    status,
+    dt_cadastro
+  FROM usuarios_adm_bot
+  ORDER BY nome
+`,
+
+buscarUsuarioAdminPorId: `
+  SELECT
+    id,
+    nome,
+    email,
+    senha,
+    status
+  FROM usuarios_adm_bot
+  WHERE id = ?
+  LIMIT 1
+`,
+
+inserirUsuarioAdmin: `
+  INSERT INTO usuarios_adm_bot
+    (nome, email, senha, status)
+  VALUES (?, ?, ?, ?)
+`,
+
+atualizarUsuarioAdmin: `
+  UPDATE usuarios_adm_bot
+     SET nome = ?,
+         email = ?,
+         status = ?
+   WHERE id = ?
+`,
+
+atualizarSenhaUsuarioAdmin: `
+  UPDATE usuarios_adm_bot
+     SET senha = ?
+   WHERE id = ?
+`,
+
+buscarUsuarioAdminPorEmail: `
+  SELECT id, email
+  FROM usuarios_adm_bot
+  WHERE email = ?
+  LIMIT 1
+`,
 };
 
 module.exports = MYSQL_ADMIN_SQL;

@@ -17,6 +17,10 @@ const adminPermissoesRouter = require('./routes/adminPermissoes');
 const adminLogsRouter = require('./routes/adminLogs');
 const adminMenu = require('./config/adminMenu');
 const adminLogsAdminRouter = require('./routes/adminlogsAdmin');
+const adminUsuariosAdminRoutes = require('./routes/adminUsuariosAdmin');
+
+const cron = require('node-cron');
+const { limparArquivosTmp } = require('./utils/cleanupTmp');
 
 async function bootstrap() {
   await initMySQL();
@@ -50,6 +54,14 @@ async function bootstrap() {
   app.use('/admin/permissoes', adminJwtAuth, adminPermissoesRouter);
   app.use('/admin/logsbot', adminJwtAuth, adminLogsRouter);
   app.use('/admin/logs', adminJwtAuth, adminLogsAdminRouter);
+  app.use('/admin/usuarios-admin', adminUsuariosAdminRoutes);
+
+  
+// roda a cada 1 hora
+cron.schedule('0 * * * *', () => {
+  console.log('🧹 Limpando pasta tmp...');
+  limparArquivosTmp();
+});
 
 
   app.listen(env.port, async () => {

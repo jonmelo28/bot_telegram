@@ -28,5 +28,11 @@ module.exports = [
     rota: '/admin/logs',
     icone: 'journal-text',
     chave: 'ADMIN_LOGS'
-  }
+  },
+  {
+  titulo: 'Usuários Admin',
+  rota: '/admin/usuarios-admin',
+  icone: 'person-gear',
+  chave: 'ADMIN_USUARIOS_ADMIN'
+},
 ];

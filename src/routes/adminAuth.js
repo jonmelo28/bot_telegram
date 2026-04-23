@@ -4,6 +4,7 @@ const env = require('../config/env');
 const { registrarLogAdmin } = require('../services/adminAuditService');
 const { autenticarAdmin } = require('../services/adminAuthService');
 
+
 router.get('/login', (req, res) => {
   return res.render('admin/auth/login', { erro: null });
 });
@@ -52,7 +53,7 @@ return res.redirect('/admin/usuarios');
 router.post('/logout', async (req, res) => {
   try {
     await registrarLogAdmin({
-      admin: req.admin || null,
+      admin: req.admin.id || null,
       acao: 'LOGOUT_ADMIN',
       tabelaAfetada: 'usuarios_adm_bot',
       registroId: req.admin ? req.admin.id : null,

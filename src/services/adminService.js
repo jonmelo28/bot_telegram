@@ -1,6 +1,7 @@
 const { mysql } = require('../config/env');
 const { getMySQL } = require('../config/mysql');
 const SQL = require('../db/mysqlAdminSQL');
+const bcrypt = require('bcryptjs');
 
 async function listarUsuarios() {
     const mysql = getMySQL();
@@ -166,6 +167,103 @@ async function listarLogs() {
   }));
 }
 
+async function listarUsuariosAdmin() {
+  const mysql = getMySQL();
+  const [rows] = await mysql.execute(SQL.listarUsuariosAdmin);
+  return rows;
+}
+
+async function buscarUsuarioAdminPorId(id) {
+  const mysql = getMySQL();
+  const [rows] = await mysql.execute(SQL.buscarUsuarioAdminPorId, [id]);
+  return rows[0] || null;
+}
+
+async function buscarUsuarioAdminPorEmail(email) {
+  const mysql = getMySQL();
+  const [rows] = await mysql.execute(SQL.buscarUsuarioAdminPorEmail, [email]);
+  return rows[0] || null;
+}
+
+async function salvarUsuarioAdmin(dados) {
+  const mysql = getMySQL();
+
+  const id = dados.id || null;
+  const nome = (dados.nome || '').trim();
+  const email = (dados.email || '').trim().toLowerCase();
+  const senha = dados.senha || '';
+  const status = String(dados.status || '1');
+
+  if (!nome || !email) {
+    throw new Error('Nome e e-mail são obrigatórios.');
+  }
+
+  if (id) {
+    await mysql.execute(SQL.atualizarUsuarioAdmin, [
+      nome,
+      email,
+      status,
+      id
+    ]);
+
+    if (senha && senha.trim()) {
+      const senhaHash = await bcrypt.hash(senha, 10);
+      await mysql.execute(SQL.atualizarSenhaUsuarioAdmin, [
+        senhaHash,
+        id
+      ]);
+    }
+
+    return id;
+  }
+
+  if (!senha || !senha.trim()) {
+    throw new Error('Senha é obrigatória para novo usuário admin.');
+  }
+
+  const senhaHash = await bcrypt.hash(senha, 10);
+
+  const [result] = await mysql.execute(SQL.inserirUsuarioAdmin, [
+    nome,
+    email,
+    senhaHash,
+    status
+  ]);
+
+  return result.insertId;
+}
+
+async function registrarLogAdmin({
+  admin,
+  acao,
+  tabelaAfetada,
+  registroId,
+  descricao,
+  dadosAnteriores,
+  dadosNovos,
+  ip,
+  userAgent
+}) {
+  const mysql = getMySQL();
+
+  await mysql.execute(`
+    INSERT INTO logs_admin_bot
+      (admin_id, acao, tabela_afetada, registro_id, descricao, dados_anteriores, dados_novos, ip, user_agent)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `, [
+    admin?.id || null,
+    admin?.nome || null,
+    acao,
+    tabelaAfetada,
+    registroId,
+    descricao,
+    JSON.stringify(dadosAnteriores || {}),
+    JSON.stringify(dadosNovos || {}),
+    ip || null,
+    userAgent || null
+  ]);
+}
+
 module.exports = {
   listarUsuarios,
   buscarUsuarioPorId,
@@ -181,5 +279,10 @@ module.exports = {
   listarPermissoesPorUsuario,
   adicionarPermissao,
   removerPermissao,
-  listarLogs
+  listarLogs,
+  listarUsuariosAdmin,
+  buscarUsuarioAdminPorId,
+  buscarUsuarioAdminPorEmail,
+  salvarUsuarioAdmin,
+  registrarLogAdmin
 };
